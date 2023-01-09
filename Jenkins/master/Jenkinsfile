@@ -1,0 +1,288 @@
+def deployable_branches = ["master","develop"]
+// def ptNameVersion = "${GIT_REPO_NAME}-${UUID.randomUUID().toString().toLowerCase()}"
+def deployRepoUrl = "git@bitbucket.org:vaipraadmin/argocd-k8s-templates.git"
+def argoDeployRepoUrl = "https://bitbucket.org/vaipraadmin/argocd-k8s-templates.git"
+def argocdServer = "afcfee03e9c90439e8e9ed3f3d351ac8-173558822.ap-south-1.elb.amazonaws.com"
+def appWaitTimeout = 600
+
+pipeline {
+
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          labels:
+            some-label: some-label-value
+        spec:
+          volumes:
+          - name: kaniko-secret
+            secret:
+                secretName: regcred
+                items:
+                - key: .dockerconfigjson
+                  path: config.json  
+
+          - name: cache
+            persistentVolumeClaim:
+              claimName: maven-cache
+
+          - name: docker-sock
+            hostPath:
+              path: '/var/run/docker.sock'
+
+          containers:
+
+          - name: maven
+            image: maven:3.8.1-jdk-8
+            command:
+            - cat
+            tty: true
+            volumeMounts:
+            - name: cache
+              mountPath: '/root/.m2/repository'
+
+          - name: kubectl-helm-cli
+            image: baharul1987/cicd-kubectl-helm:latest
+            command:
+            - cat
+            tty: true
+
+          - name: sonarcli
+            image: sonarsource/sonar-scanner-cli:latest
+            command:
+            - cat
+            tty: true
+            volumeMounts:
+            - name: cache
+              mountPath: '/root/.m2/repository'
+
+          - name: git
+            image: jenkins/ssh-agent:jdk11
+            command:
+            - cat
+            tty: true
+
+          - name: argo-cd-tools
+            image: argoproj/argo-cd-tools:latest
+            command:
+            - cat
+            tty: true
+            envVar:
+            - key: GIT_SSH_COMMAND
+              value: "ssh -o StrictHostKeyChecking=no"
+
+          - name: argo-cd-cli
+            image: argoproj/argocd-cli:v0.10.0
+            command:
+            - cat
+            tty: true
+            envVar:
+            - key: ARGOCD_SERVER
+              value: argocdServer
+
+          - name: kaniko
+            image: gcr.io/kaniko-project/executor:v1.9.0-debug
+            command:
+            - sleep
+            args:
+            - 9999999
+            volumeMounts:
+            - name: kaniko-secret
+              mountPath: /kaniko/.docker
+          restartPolicy: Never           
+        '''
+    }
+  }
+
+
+  
+
+    environment {
+        GIT_REPO_NAME = env.GIT_URL.replace('.git', '').split('/').last()
+        branchName = env.GIT_BRANCH.split('/').last()
+        AWS_ACCOUNT_ID="191362498532"
+        AWS_DEFAULT_REGION="ap-south-1"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${GIT_REPO_NAME}"
+        IMAGE_TAG="${BUILD_NUMBER}"
+        argoCdName= GIT_REPO_NAME.replace("_", "-")
+        
+    }
+
+
+
+        
+
+
+
+    stages {
+      
+   
+        stage("Check branch Eligibility") {
+          steps {
+            script {
+              if (!deployable_branches.contains(branchName)) {
+                println "Branch: ${branchName} is not part of deployable_branches"
+                println "Skipping pipeline"
+                currentBuild.result = 'SUCCESS'
+                return
+              }else{
+                println "Branch: ${branchName} is  part of deployable_branches. Proceeding Further!"
+              }
+            }
+          }
+        }
+
+      stage('Maven Build') {
+          when { expression { true } }
+          steps {
+              container('maven') {
+                  sh 'mvn clean package -Dmaven.test.failure.ignore=true'
+              }
+          }
+      }
+
+
+      // stage('Login into ECR') {
+      //   when { expression { true } }
+      //   steps {
+      //     container('docker') {
+      //       script {
+      //             echo "REPONAME - ${GIT_REPO_NAME}"
+      //             echo "IMAGETAG - ${IMAGE_TAG}"
+      //             sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      //             isRepoExist = sh(script:"aws ecr describe-repositories --region ap-south-1 --query 'repositories[].repositoryName'  | grep '${GIT_REPO_NAME}'", returnStatus: true) == 0
+      //             echo "$isRepoExist"
+      //             if (!isRepoExist) {
+      //                     sh "aws ecr create-repository --repository-name ${GIT_REPO_NAME} --image-scanning-configuration scanOnPush=true --region ap-south-1"
+      //                 } else {
+      //                     echo "Repo already Exists, skipping this stepp ${GIT_REPO_NAME}!"
+      //                 }
+      //             }  
+
+      //     }
+
+      //   }
+      // }
+
+
+        stage('Build kaniko image') {
+          steps {
+            container('kaniko') {
+              script {
+                sh '''
+                  /kaniko/executor --context `pwd` --destination ${REPOSITORY_URI}:${IMAGE_TAG}
+                  /kaniko/executor --context `pwd` --destination ${REPOSITORY_URI}:latest
+                '''
+              }
+            }
+          }
+          }
+      // stage('Build Docker Image') {
+      //       when { expression { true } }
+      //       steps {
+      //         container('docker') {
+          
+      //                 sh "docker build -t ${REPOSITORY_URI}:${IMAGE_TAG} ." 
+      //                 sh "docker tag ${REPOSITORY_URI}:${IMAGE_TAG} ${REPOSITORY_URI}:$IMAGE_TAG"
+      //                 sh "docker push ${REPOSITORY_URI}:${IMAGE_TAG}"
+      //                 sh "docker tag ${REPOSITORY_URI}:${IMAGE_TAG} ${REPOSITORY_URI}:latest"
+      //                 sh "docker push ${REPOSITORY_URI}:latest"
+      //                 sh "docker rmi ${REPOSITORY_URI}:${IMAGE_TAG}"
+      //                 sh "docker rmi ${REPOSITORY_URI}:latest"
+
+      //         }
+
+      //       }
+      //     }
+ 
+  
+      // stage("Trigger gitops Pipeline") {
+      //     steps {
+      //       container('docker') {
+      //         sh "curl  -v -k --user admin:1126c1769c99eda297d94192a1e14f53ae -X POST -H 'cache-control: no-cache' 'content-type: application/x-www-form-urlencoded' --data 'IMAGE_TAG=${IMAGE_TAG}' 'http://jenkins.outpathstg.com/job/argocd/buildWithParameters?token=gitops-config'"
+      //       }
+      //     }
+      // }
+
+
+      
+      stage('Deployment') {
+        steps {
+
+                container('argo-cd-tools') {
+                  println("Deploying to ${GIT_REPO_NAME}")
+
+                  dir("deployment-${branchName}") {  
+                      withCredentials([file(credentialsId: 'pvt_key', variable: 'pvtKey')]) { 
+                          sh "mkdir /root/.ssh/ && ssh-keyscan -t rsa bitbucket.org >> ~/.ssh/known_hosts && cp \$pvtKey /root/.ssh/id_rsa && chmod 400 /root/.ssh/id_rsa"
+                          sh "git clone ${deployRepoUrl}"
+                          sh "cd \$(basename '${deployRepoUrl}' .git) && \
+                          ls -la \
+                          &&  cd ./'${GIT_REPO_NAME}'/'${branchName}' \
+                          && echo \$(pwd) \
+                          && echo '${IMAGE_TAG}' \
+                          && sed -i 's#amazonaws.com/'${GIT_REPO_NAME}'.*#amazonaws.com/'${GIT_REPO_NAME}':'${IMAGE_TAG}'#g' values.yaml \
+                          && git config --global user.name 'baharulkhan' \
+                          && git config --global user.email 'baharul87@gmail.com' \
+                          && git add . \
+                          && git commit -am 'Updated the deployment file' \
+                          && git branch \
+                          && git remote set-url origin  http://baharulkhan:ATBBbjmVpCgPqRQCy7jgDuxs9HkC8F5E9D53@bitbucket.org/vaipraadmin/argocd-k8s-templates.git \
+                          && git push origin master"
+                          
+                      } 
+                  }  
+        }
+
+        }
+
+      }
+
+
+
+      // stage('Deploy to Develop') {
+      // sample comment
+      //        steps { 
+      //         container('argo-cd-tools') { 
+      //               withCredentials([string(credentialsId: "argocdAuthToken", variable: 'ARGOCD_AUTH_TOKEN')]) {
+      //                 sh " which argocd && argocd login '${argocdServer}' --username outpath --password dfs@2019 --insecure && argocd version"
+      //                 script {
+      //                   isAppExist = sh(script:"argocd app list | grep '${argoCdName}-${branchName}'", returnStatus: true) == 0
+      //                     if (!isAppExist) {
+      //                         // category
+      //                         //sh " argocd app create '${argoCdName}-${branchName}' --repo '${argoDeployRepoUrl}' --path ./'${GIT_REPO_NAME}'/'${branchName}' --dest-namespace default --dest-server https://kubernetes.default.svc --directory-recurse"
+      //                         sh "argocd app create '${argoCdName}-${branchName}' --repo '${argoDeployRepoUrl}' --path ./'${GIT_REPO_NAME}'/'${branchName}' --dest-namespace default --dest-server https://kubernetes.default.svc --directory-recurse"
+      //                         // sh "argocd app create naming-server-develop --repo '${argoDeployRepoUrl}'  --path helm-template-subchart/  --dest-namespace default --dest-server https://kubernetes.default.svc --values ./naming-server/develop/values.yaml"
+      //                     } else {
+      //                         sh "argocd --grpc-web app sync '${argoCdName}-${branchName}' --force" 
+      //                         sh "argocd --grpc-web app wait '${argoCdName}-${branchName}' --timeout 600"  
+      //                     }
+      //                 } 
+   
+      //               } 
+                
+                        
+      //         }
+      //       }
+      // }
+
+      // stage('Deploy to Prod') {
+      //   when { branch "master" }
+      //   steps {
+      //     container('argo-cd-cli') {
+      //       withCredentials([string(credentialsId: "argocdAuthToken", variable: 'ARGOCD_AUTH_TOKEN')]) {
+      //           sh "/argocd app list"
+      //       }
+              
+      //     }
+      //   }
+      // }
+
+
+
+      
+    }
+    
+}

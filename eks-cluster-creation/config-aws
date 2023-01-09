@@ -1,0 +1,32 @@
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMvakNDQWVhZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJek1ERXdOVEE1TkRRMU5Wb1hEVE16TURFd01qQTVORFExTlZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTEd2CnkvNk5JdyttaHlveVcwQjdFSzlWNVRBZFcreUxOa2MzUnBPd1RvVnNpdW9FNENYVGdpenJhdm82aDFFc3kycXAKUXV3aHRzNzlBUHdEY0U3cEJOZUg0OXA4MVg1UmFrZ215cGI3M215ZmtRT2JIMjVyRDd6MEFkbTRvcFo1ZGVtWgovNEtrWEx2WmlYZkc4MDhEdVBKYitVVkJyMklYZGJTOXlwa0MzNkdaZW1zRHdqckhZNmg5RUp5a2pIRm1TOXNoCkhCdE9zR25xb1Z5aDRSWm9Ed2ZqM1FNdjBkdzk1WHZaR0hMbXRMcGE3QStGcHpaN0hmWHFEWmNJU1pJMC9vRksKeGt1Z0RXSmdPSytaY05LTjU0emlzbzljREhpeFVwK1I0dkxBM1JnQ0Y3SmlucDNZTjFlMWRWTWk3MDhGUWlRNgpJT29Jd3RUMWJ5a3FnWEFoZGk4Q0F3RUFBYU5aTUZjd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZPVmpPZFdKQkVrUUpSMmJmbEQ4YlNlaGg4YWhNQlVHQTFVZEVRUU8KTUF5Q0NtdDFZbVZ5Ym1WMFpYTXdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBR1BYSGZaQUhxV3hDblhrcGEzMgoxNGxxZ0d4a1RmUCs1VFAwNHpmRThjcWViNm10V09ZTzhDbE82L0xJSHdpQlFScVdpYzVEUUFpd3FUQU1KR0JRCkJYb3kzY3Q2dkdJdndTeEEwSkFldmZmQmZPR05XWXJoNXd1dkZadWZQNEUrRVZvOWFtc21JOEF3aCs1NkdTZmQKMndTVEpjYWtqNWdQckVmQ0JpQUdUVkNveXZPUmFFMFVPVHBTbGtwL0lEMTB1Z2NXNFl4QVpZL1plY2JIbFB2aAo1eXJWbE8yK1lEc29zRHFKYmx4U3N4ZHpERGEwWHpBQ0s2KzJMSVZKNXkyU1I3OWJzaDRpN21NZFU2dW5tT0wxCmRVdkltSC82K1Y3ZlVuUU1zSm1UbS9DeWNRTUMrakJ1eTZvczFvbThkUzBwYUpiK1BqM1FvWVpENEp5UklDM1QKTHFFPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    server: https://ED71B95155F4724A9BF9A5CA86038BFE.gr7.ap-south-1.eks.amazonaws.com
+  name: arn:aws:eks:ap-south-1:191362498532luster/eks-op-mumbai-d01
+contexts:
+- context:
+    cluster: arn:aws:eks:ap-south-1:191362498532luster/eks-op-mumbai-d01
+    user: arn:aws:eks:ap-south-1:191362498532luster/eks-op-mumbai-d01
+  name: arn:aws:eks:ap-south-1:191362498532luster/eks-op-mumbai-d01
+current-context: arn:aws:eks:ap-south-1:191362498532luster/eks-op-mumbai-d01
+kind: Config
+preferences: {}
+users:
+- name: arn:aws:eks:ap-south-1:191362498532luster/eks-op-mumbai-d01
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1beta1
+      command: aws
+      args:
+        - --region
+        - ap-south-1
+        - eks
+        - get-token
+        - --cluster-name
+        - eks-op-mumbai-d01
+        # - "- --role"
+        # - "arn:aws:iam::191362498532ole/my-role"
+      # env:
+        # - name: "AWS_PROFILE"
+        #   value: "aws-profile"

@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+    name: samplehelm
+  name: samplehelm
+spec:
+  gateways:
+  - outpath-com
+  hosts:
+  - samplehelm-develop.outpathprod.com
+  - samplehelm-develop
+  http:
+  - route:
+    - destination:
+        host: samplehelm
+        port:
+          number: 8000
