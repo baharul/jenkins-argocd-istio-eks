@@ -1,18 +1,23 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
+  creationTimestamp: null
+  labels:
+    app: sample-deployment
+  name: sample-deployment
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: sample-deployment
+  strategy: {}
   template:
     metadata:
+      creationTimestamp: null
       labels:
-        app: nginx
+        app: sample-deployment
     spec:
+      containers:
       tolerations:
       - effect: NoSchedule
         key: spot
@@ -39,12 +44,7 @@ spec:
                   - meta-search-engine
               topologyKey: kubernetes.io/hostname
             weight: 100
-      containers:
-      - name: nginx
-        image: nginx:1.14.2
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            memory: 500Mi
-            cpu: 100m
+      - image: nginx:1.17.6-alpine
+        name: nginx
+        resources: {}
+status: {}

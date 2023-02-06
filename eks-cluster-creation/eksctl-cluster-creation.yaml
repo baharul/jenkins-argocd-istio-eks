@@ -39,6 +39,23 @@ managedNodeGroups:
   desiredCapacity: 1
   minSize: 1
   maxSize: 2
+- name: istiopool
+  tags:
+    # EC2 tags required for cluster-autoscaler auto-discovery
+    k8s.io/cluster-autoscaler/enabled: "true"
+    k8s.io/cluster-autoscaler/eks-op-mumbai-d01: "owned"
+  privateNetworking: true
+  instanceType: t3a.medium  
+  desiredCapacity: 1
+  minSize: 1
+  spot: true
+  maxSize: 3
+  labels:
+    type: istio
+  taints:
+  - key: type
+    value: "istio"
+    effect: NoSchedule
 - name: spotpool
   tags:
     # EC2 tags required for cluster-autoscaler auto-discovery
@@ -54,5 +71,23 @@ managedNodeGroups:
     role: spot
   taints:
   - key: spot
+    value: "true"
+    effect: NoSchedule
+- name: efkloggingpool
+  tags:
+    # EC2 tags required for cluster-autoscaler auto-discovery
+    k8s.io/cluster-autoscaler/enabled: "true"
+    k8s.io/cluster-autoscaler/eks-op-mumbai-d01: "owned"
+  privateNetworking: true
+  instanceType: t3a.medium
+  spot: true
+  desiredCapacity: 1
+  minSize: 1
+  maxSize: 3
+  labels:
+    role: spot
+    purpose: logging
+  taints:
+  - key: logging
     value: "true"
     effect: NoSchedule
