@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: journey-planner
+  name: journey-planner
+spec:
+  containers:
+  - image: journey-planner 191362498532.dkr.ecr.ap-south-1.amazonaws.com/journey-planner:5
+    name: journey-planner
+    ports:
+    - name: journey-planner
+      containerPort: 9068   
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
