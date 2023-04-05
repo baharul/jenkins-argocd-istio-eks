@@ -1,0 +1,149 @@
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: istio-provisioner
+spec:
+  ttlSecondsAfterEmpty: 30  
+  labels:
+    purpose: istio
+  taints:
+  - effect: NoSchedule
+    key: istio
+    value: "true"
+  requirements:
+    # - key: "karpenter.k8s.aws/instance-category"
+    #   operator: In
+    #   values: ["t","m","c"]
+    # - key: "karpenter.k8s.aws/instance-cpu"
+    #   operator: In
+    #   values: ["2","4", "8"]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: ["spot"]
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values:
+      - t3a.medium
+      - t3.medium
+      - t3a.large
+      - t3.large
+  limits:
+    resources:
+      cpu: 2000
+  providerRef:
+    name: karp-spot-provider
+---
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: efk-provisioner
+spec:
+  ttlSecondsAfterEmpty: 30  
+  labels:
+    purpose: logging
+  taints:
+  - effect: NoSchedule
+    key: logging
+    value: "true"
+  requirements:
+    # - key: "karpenter.k8s.aws/instance-category"
+    #   operator: In
+    #   values: ["t","m","c"]
+    # - key: "karpenter.k8s.aws/instance-cpu"
+    #   operator: In
+    #   values: ["2","4", "8"]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: ["spot"]
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values:
+      - a1.xlarge
+      - c6gn.xlarge
+      - c6in.xlarge
+      - c5d.xlarge
+  limits:
+    resources:
+      cpu: 2000
+  providerRef:
+    name: karp-spot-provider
+---
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: ondemand-provisioner
+spec:
+  ttlSecondsAfterEmpty: 30  
+  labels:
+    purpose: on_demand
+  taints:
+  - effect: NoSchedule
+    key: on_demand
+    value: "true"
+  requirements:
+    # - key: "karpenter.k8s.aws/instance-category"
+    #   operator: In
+    #   values: ["t","m","c"]
+    # - key: "karpenter.k8s.aws/instance-cpu"
+    #   operator: In
+    #   values: ["2","4", "8"]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: ["spot"]
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values:
+      - t3a.medium
+      - t3.medium
+      - t3a.large
+      - t3.large
+  limits:
+    resources:
+      cpu: 2000
+  providerRef:
+    name: karp-spot-provider
+---
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: spot-provisioner
+spec:
+  ttlSecondsAfterEmpty: 30  
+  labels:
+    eks.amazonaws.com/capacityType: SPOT
+  taints:
+  - effect: NoSchedule
+    key: spot
+    value: "true"
+  requirements:
+    # - key: "karpenter.k8s.aws/instance-category"
+    #   operator: In
+    #   values: ["t","m","c"]
+    # - key: "karpenter.k8s.aws/instance-cpu"
+    #   operator: In
+    #   values: ["2","4", "8"]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: ["spot"]
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values:
+      - t3a.medium
+      - t3.medium
+      - t3a.large
+      - t3.large
+  limits:
+    resources:
+      cpu: 2000
+  providerRef:
+    name: karp-spot-provider
+---
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: karp-spot-provider
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: "eks-op-mumbai-d01" # replace with your cluster name
+  securityGroupSelector:
+    karpenter.sh/discovery: "eks-op-mumbai-d01" # replace with your cluster name
