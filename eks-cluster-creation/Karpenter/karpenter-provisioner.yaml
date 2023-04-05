@@ -137,6 +137,42 @@ spec:
       cpu: 2000
   providerRef:
     name: karp-spot-provider
+
+---
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: kafka-provisioner
+spec:
+  ttlSecondsAfterEmpty: 30  
+  labels:
+    eks.amazonaws.com/capacityType: SPOT
+  taints:
+  - effect: NoSchedule
+    key: kafka
+    value: "true"
+  requirements:
+    # - key: "karpenter.k8s.aws/instance-category"
+    #   operator: In
+    #   values: ["t","m","c"]
+    # - key: "karpenter.k8s.aws/instance-cpu"
+    #   operator: In
+    #   values: ["2","4", "8"]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: ["spot"]
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values:
+      - t3a.medium
+      - t3.medium
+      - t3a.large
+      - t3.large
+  limits:
+    resources:
+      cpu: 2000
+  providerRef:
+    name: karp-spot-provider
 ---
 apiVersion: karpenter.k8s.aws/v1alpha1
 kind: AWSNodeTemplate
