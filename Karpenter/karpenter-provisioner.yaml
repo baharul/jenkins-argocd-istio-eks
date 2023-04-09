@@ -6,6 +6,7 @@ spec:
   ttlSecondsAfterEmpty: 30  
   labels:
     purpose: istio
+    eks.amazonaws.com/capacityType: SPOT
   taints:
   - effect: NoSchedule
     key: istio
@@ -41,17 +42,12 @@ spec:
   ttlSecondsAfterEmpty: 30  
   labels:
     purpose: logging
+    eks.amazonaws.com/capacityType: SPOT
   taints:
   - effect: NoSchedule
     key: logging
     value: "true"
   requirements:
-    # - key: "karpenter.k8s.aws/instance-category"
-    #   operator: In
-    #   values: ["t","m","c"]
-    # - key: "karpenter.k8s.aws/instance-cpu"
-    #   operator: In
-    #   values: ["2","4", "8"]
     - key: karpenter.sh/capacity-type
       operator: In
       values: ["spot"]
@@ -81,15 +77,9 @@ spec:
     key: on_demand
     value: "true"
   requirements:
-    # - key: "karpenter.k8s.aws/instance-category"
-    #   operator: In
-    #   values: ["t","m","c"]
-    # - key: "karpenter.k8s.aws/instance-cpu"
-    #   operator: In
-    #   values: ["2","4", "8"]
     - key: karpenter.sh/capacity-type
       operator: In
-      values: ["spot"]
+      values: ["on-demand"]
     - key: node.kubernetes.io/instance-type
       operator: In
       values:
@@ -116,12 +106,6 @@ spec:
     key: spot
     value: "true"
   requirements:
-    # - key: "karpenter.k8s.aws/instance-category"
-    #   operator: In
-    #   values: ["t","m","c"]
-    # - key: "karpenter.k8s.aws/instance-cpu"
-    #   operator: In
-    #   values: ["2","4", "8"]
     - key: karpenter.sh/capacity-type
       operator: In
       values: ["spot"]
@@ -147,17 +131,12 @@ spec:
   ttlSecondsAfterEmpty: 30  
   labels:
     eks.amazonaws.com/capacityType: SPOT
+    purpose: kafka
   taints:
   - effect: NoSchedule
     key: kafka
     value: "true"
   requirements:
-    # - key: "karpenter.k8s.aws/instance-category"
-    #   operator: In
-    #   values: ["t","m","c"]
-    # - key: "karpenter.k8s.aws/instance-cpu"
-    #   operator: In
-    #   values: ["2","4", "8"]
     - key: karpenter.sh/capacity-type
       operator: In
       values: ["spot"]
